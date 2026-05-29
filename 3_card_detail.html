@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>선불카드 상세 내역</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root {
+  --green: #03C75A; --green-dark: #028A3E; --green-light: #E8FAF0;
+  --red: #FF4040; --orange: #FF6B35;
+  --bg: #F3F5F7; --surface: #FFFFFF;
+  --text-primary: #1A1A1A; --text-secondary: #767676; --text-tertiary: #929294;
+  --border: #EDEFF2; --divider: #F3F5F7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  background: #D8D8D8;
+  display: flex; justify-content: center; min-height: 100vh;
+  padding: 24px 0 48px;
+}
+.frame {
+  width: 375px; background: var(--bg);
+  border-radius: 44px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column; max-height: 812px;
+}
+.sb { height: 44px; background: var(--surface); display: flex; align-items: center; padding: 0 21px; position: relative; flex-shrink: 0; }
+.sb-time { font-size: 15px; font-weight: 600; color: var(--text-primary); position: absolute; left: 21px; top: 50%; transform: translateY(-50%); }
+.sb-icons { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; }
+.header { height: 56px; background: var(--surface); display: flex; align-items: center; padding: 0 20px; position: relative; border-bottom: 1px solid var(--divider); flex-shrink: 0; }
+.header-title { position: absolute; left: 0; right: 0; text-align: center; font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; pointer-events: none; }
+.back-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 16px; }
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+
+/* Nudge Banner */
+.nudge {
+  margin: 8px 16px;
+  background: #FFF4F0; border: 1.5px solid #FFC9B5;
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; align-items: flex-start; gap: 10px;
+}
+.nudge-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.nudge-body { flex: 1; min-width: 0; }
+.nudge-title { font-size: 13px; font-weight: 700; color: #C03500; letter-spacing: -0.3px; margin-bottom: 2px; }
+.nudge-desc { font-size: 12px; color: var(--text-primary); letter-spacing: -0.3px; line-height: 1.5; }
+.nudge-btn {
+  display: inline-flex; align-items: center;
+  background: #C03500; color: white;
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  margin-top: 7px; letter-spacing: -0.2px;
+  cursor: pointer; border: none; font-family: inherit;
+}
+
+/* Week Nav */
+.week-area { background: var(--surface); padding: 10px 16px 0; }
+.week-row { display: flex; align-items: center; gap: 8px; }
+.week-nav-btn { width: 28px; height: 28px; border: none; background: none; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; flex-shrink: 0; }
+.week-cells { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.week-cell { display: flex; flex-direction: column; align-items: center; }
+.week-day-lbl { font-size: 10px; font-weight: 600; color: var(--text-tertiary); margin-bottom: 2px; letter-spacing: -0.2px; }
+.week-day-lbl.sun { color: var(--red); }
+.week-day-lbl.sat { color: #0070CC; }
+.week-num { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; color: var(--text-primary); }
+.week-num.today { background: var(--green); color: white; font-weight: 700; }
+.week-dot { width: 5px; height: 5px; border-radius: 50%; margin-top: 2px; }
+.dot-e { background: var(--red); }
+.dot-i { background: var(--green); }
+.dot-n { background: transparent; }
+/* Card Filter Toggle */
+.card-toggle {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 9px 0 10px; cursor: pointer;
+  background: var(--surface);
+}
+.card-toggle-text { font-size: 13px; color: var(--green); font-weight: 600; letter-spacing: -0.3px; }
+
+/* Transaction List */
+.divider { height: 8px; background: var(--bg); }
+.tx-list { background: var(--surface); }
+.tx-date-hd { padding: 12px 20px 6px; display: flex; align-items: center; }
+.tx-date { font-size: 13px; font-weight: 600; color: var(--text-secondary); letter-spacing: -0.3px; }
+.tx-date-total { margin-left: auto; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.tx-row { display: flex; align-items: center; padding: 10px 20px; gap: 12px; border-bottom: 1px solid var(--divider); }
+.tx-row:last-child { border-bottom: none; }
+.tx-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 18px; }
+.tx-info { flex: 1; min-width: 0; }
+.tx-name { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tx-sub { font-size: 12px; color: var(--text-secondary); letter-spacing: -0.3px; margin-top: 2px; }
+.tx-right { text-align: right; flex-shrink: 0; }
+.tx-amt { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.tx-amt.minus { color: var(--red); }
+.tx-amt.plus { color: var(--green-dark); }
+.tx-unit { font-size: 13px; font-weight: 600; }
+.tx-unit.minus { color: var(--red); }
+.tx-unit.plus { color: var(--green-dark); }
+/* [B] 또래 백분위 badge */
+.peer-badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px;
+  margin-top: 3px; letter-spacing: -0.1px;
+  white-space: nowrap;
+}
+.pb-high { background: #FFF0EE; color: #C03500; }
+.pb-mid { background: var(--bg); color: var(--text-secondary); }
+.pb-low { background: var(--green-light); color: var(--green-dark); }
+
+/* Float */
+.float-area {
+  position: sticky; bottom: 0;
+  padding: 10px 20px 20px;
+  background: linear-gradient(to top, var(--bg) 60%, transparent);
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+.float-salk {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--green); color: white; border: none;
+  border-radius: 24px; font-size: 15px; font-weight: 700;
+  padding: 13px 20px; cursor: pointer; font-family: inherit;
+  letter-spacing: -0.3px;
+  box-shadow: 0 4px 16px rgba(3,199,90,0.32);
+}
+.float-direct {
+  flex: 1; background: var(--surface); color: var(--text-primary);
+  border: 1.5px solid var(--border); border-radius: 24px;
+  font-size: 15px; font-weight: 700; letter-spacing: -0.3px;
+  padding: 13px 18px; cursor: pointer; font-family: inherit; text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+</style>
+</head>
+<body>
+<div class="frame">
+
+<!-- Status Bar -->
+<div class="sb">
+  <span class="sb-time">9:41</span>
+  <div class="sb-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+      <rect x="0" y="3" width="3" height="9" rx="1" fill="#1A1A1A"/>
+      <rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1A1A1A"/>
+      <rect x="9" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+      <rect x="13" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+    </svg>
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+      <path d="M8.5 1.5C10.73 1.5 12.73 2.52 14.05 4.12L15.46 2.71C13.78.78 11.29-.25 8.5-.25S3.22.78 1.54 2.71L2.95 4.12C4.27 2.52 6.27 1.5 8.5 1.5Z" fill="#1A1A1A"/>
+      <path d="M8.5 5C9.88 5 11.13 5.56 12.05 6.46L13.46 5.05C12.17 3.78 10.42 3 8.5 3S4.83 3.78 3.54 5.05L4.95 6.46C5.87 5.56 7.12 5 8.5 5Z" fill="#1A1A1A"/>
+      <circle cx="8.5" cy="10" r="1.5" fill="#1A1A1A"/>
+    </svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+      <rect x="0.5" y="1.5" width="21" height="9" rx="1.5" stroke="#1A1A1A" stroke-width="1"/>
+      <rect x="2" y="3" width="17" height="6" rx="0.5" fill="#1A1A1A"/>
+      <path d="M23 4.5V7.5C23.83 7.17 23.83 4.83 23 4.5Z" fill="#1A1A1A"/>
+    </svg>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="back-btn" onclick="location.href='2_calendar.html'">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M15 19l-7-7 7-7" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="header-title">용돈기록장</div>
+  <div class="header-actions">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 5V19M5 12H19" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M4 6H20M4 12H20M4 18H20" stroke="#C8CACC" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- [A] 과소비 인라인 넛지 (편의점) -->
+  <div class="nudge">
+    <div class="nudge-icon">🧃</div>
+    <div class="nudge-body">
+      <div class="nudge-title">편의점 지출이 또래보다 많아</div>
+      <div class="nudge-desc">이번 달 편의점에 42,000원 썼어. 고1 평균보다 12,000원 더야.</div>
+      <button class="nudge-btn" onclick="location.href='A_salkkaboa.html'">살까봐한테 물어보기 →</button>
+    </div>
+  </div>
+
+  <!-- Week Calendar -->
+  <div class="week-area">
+    <div class="week-row">
+      <button class="week-nav-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="week-cells">
+        <div class="week-cell">
+          <div class="week-day-lbl sun">일</div>
+          <div class="week-num" style="color:var(--red);">18</div>
+          <div class="week-dot dot-n"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl">월</div>
+          <div class="week-num">19</div>
+          <div class="week-dot dot-n"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl">화</div>
+          <div class="week-num">20</div>
+          <div class="week-dot dot-e"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl">수</div>
+          <div class="week-num">21</div>
+          <div class="week-dot dot-e"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl">목</div>
+          <div class="week-num today">22</div>
+          <div class="week-dot dot-e"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl">금</div>
+          <div class="week-num">23</div>
+          <div class="week-dot dot-e"></div>
+        </div>
+        <div class="week-cell">
+          <div class="week-day-lbl sat">토</div>
+          <div class="week-num" style="color:#0070CC;">24</div>
+          <div class="week-dot dot-n"></div>
+        </div>
+      </div>
+      <button class="week-nav-btn">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 12l4-4-4-4" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="card-toggle">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" fill="var(--green)"/>
+        <circle cx="8" cy="8" r="3.5" fill="white"/>
+      </svg>
+      <span class="card-toggle-text">Npay 머니카드 Y 내역만 보기</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 23일 -->
+  <div class="tx-list">
+    <div class="tx-date-hd">
+      <span class="tx-date">23일 (수)</span>
+      <span class="tx-date-total">-22,000원 · 3건</span>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">🧃</div>
+      <div class="tx-info">
+        <div class="tx-name">GS25 편의점</div>
+        <div class="tx-sub">NPay 머니카드 Y · 11:23</div>
+        <!-- [B] 또래 백분위 badge -->
+        <div><span class="peer-badge pb-high">편의점 상위 28% ↑</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-4,200</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">☕</div>
+      <div class="tx-info">
+        <div class="tx-name">공차 강남역점</div>
+        <div class="tx-sub">NPay 머니카드 Y · 15:42</div>
+        <div><span class="peer-badge pb-mid">카페 또래 비슷</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-6,800</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">🍕</div>
+      <div class="tx-info">
+        <div class="tx-name">배달의민족</div>
+        <div class="tx-sub">NPay 머니카드 Y · 19:05</div>
+        <div><span class="peer-badge pb-low">배달 또래보다 절약 👍</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-11,000</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="height:4px;background:var(--bg);"></div>
+
+  <!-- 21일 -->
+  <div class="tx-list">
+    <div class="tx-date-hd">
+      <span class="tx-date">21일 (월)</span>
+      <span class="tx-date-total">-46,500원 · 4건</span>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">🚌</div>
+      <div class="tx-info">
+        <div class="tx-name">티머니</div>
+        <div class="tx-sub">NPay 머니카드 Y · 07:48</div>
+        <div><span class="peer-badge pb-mid">교통 또래 비슷</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-1,500</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">🧃</div>
+      <div class="tx-info">
+        <div class="tx-name">CU 편의점</div>
+        <div class="tx-sub">NPay 머니카드 Y · 13:10</div>
+        <div><span class="peer-badge pb-high">편의점 상위 28% ↑</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-8,200</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">💄</div>
+      <div class="tx-info">
+        <div class="tx-name">올리브영</div>
+        <div class="tx-sub">NPay 머니카드 Y · 16:30</div>
+        <div><span class="peer-badge pb-mid">뷰티 또래 비슷</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-23,500</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+    <div class="tx-row">
+      <div class="tx-icon">🚌</div>
+      <div class="tx-info">
+        <div class="tx-name">티머니</div>
+        <div class="tx-sub">NPay 머니카드 Y · 18:22</div>
+        <div><span class="peer-badge pb-mid">교통 또래 비슷</span></div>
+      </div>
+      <div class="tx-right">
+        <span class="tx-amt minus">-1,500</span><span class="tx-unit minus">원</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- [A] Float: 살까봐 + 직접입력 -->
+  <div class="float-area">
+    <button class="float-salk" onclick="location.href='A_salkkaboa.html'">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M14 1H2C1.45 1 1 1.45 1 2V10C1 10.55 1.45 11 2 11H4.5V14.5L8.5 11H14C14.55 11 15 10.55 15 10V2C15 1.45 14.55 1 14 1Z" fill="white"/>
+      </svg>
+      살까봐
+    </button>
+    <button class="float-direct">✏️ 직접입력</button>
+  </div>
+
+</div>
+</div>
+</body>
+</html>
