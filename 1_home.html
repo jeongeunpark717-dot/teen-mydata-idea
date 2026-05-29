@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>내 지갑 — 용돈기록장 개선</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root {
+  --green: #03C75A;
+  --green-dark: #028A3E;
+  --green-light: #E8FAF0;
+  --purple: #7C3AED;
+  --purple-light: #F3ECFD;
+  --red: #FF4040;
+  --bg: #F3F5F7;
+  --surface: #FFFFFF;
+  --text-primary: #1A1A1A;
+  --text-secondary: #767676;
+  --text-tertiary: #929294;
+  --border: #EDEFF2;
+  --divider: #F3F5F7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', sans-serif;
+  background: #D8D8D8;
+  min-height: 100vh;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 24px 0 48px;
+}
+/* Phone Frame */
+.frame {
+  width: 375px;
+  background: var(--bg);
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+}
+/* Status Bar */
+.sb {
+  height: 44px; background: var(--surface);
+  display: flex; align-items: center;
+  padding: 0 21px; position: relative;
+}
+.sb-time {
+  font-size: 15px; font-weight: 600; color: var(--text-primary);
+  position: absolute; left: 21px; top: 50%; transform: translateY(-50%);
+}
+.sb-icons {
+  position: absolute; right: 15px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; gap: 5px;
+}
+/* NPay Header */
+.npay-header {
+  height: 56px; background: var(--surface);
+  display: flex; align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--divider);
+}
+.npay-header-right {
+  margin-left: auto; display: flex; align-items: center; gap: 16px;
+}
+/* Scroll */
+.scroll { overflow-y: auto; }
+
+/* Balance Card */
+.balance-card {
+  margin: 8px 16px;
+  background: #0F1420;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+}
+.balance-top {
+  padding: 20px 20px 20px;
+  min-height: 152px;
+  position: relative; z-index: 1;
+}
+.balance-nudge {
+  position: absolute; top: 18px; right: 18px;
+  background: rgba(255,255,255,0.12);
+  color: #fff; font-size: 13px; font-weight: 700;
+  padding: 7px 14px; border-radius: 20px;
+  letter-spacing: -0.3px; white-space: nowrap;
+  z-index: 1;
+}
+.balance-title {
+  font-size: 15px; font-weight: 700;
+  color: #fff; letter-spacing: -0.3px;
+  margin-bottom: 5px;
+}
+.balance-link {
+  font-size: 13px; color: rgba(255,255,255,0.4);
+  text-decoration: underline; text-underline-offset: 2px;
+  display: block; margin-bottom: 22px;
+  letter-spacing: -0.2px; cursor: pointer;
+}
+.balance-amount {
+  display: flex; align-items: baseline; gap: 3px;
+}
+.balance-num {
+  font-size: 34px; font-weight: 800;
+  color: #fff; letter-spacing: -1px;
+}
+.balance-unit {
+  font-size: 32px; font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+.balance-mascot {
+  position: absolute; right: 0px; top: 15px;
+  height: 200px; width: auto;
+  user-select: none; pointer-events: none;
+  z-index: 0;
+}
+.balance-btns {
+  display: flex;
+  background: #1C2133;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  position: relative; z-index: 1;
+}
+.balance-btn {
+  flex: 1; height: 52px;
+  background: transparent;
+  border: none; border-right: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.85);
+  font-size: 15px; font-weight: 600;
+  font-family: inherit; cursor: pointer;
+  letter-spacing: -0.3px;
+}
+.balance-btn:last-child { border-right: none; }
+/* Section Card */
+.section {
+  background: var(--surface);
+  margin: 0 16px 0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+}
+.section + .section { margin-top: 8px; }
+.section-title {
+  font-size: 16px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.5px;
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 2px;
+  cursor: pointer;
+}
+.section-title svg { opacity: 0.5; }
+/* Yoddon Row */
+.y-row {
+  display: flex; align-items: center;
+  padding: 13px 0; gap: 12px;
+  border-bottom: 1px solid var(--divider);
+}
+.y-row:last-of-type { border-bottom: none; }
+.y-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.y-icon-income { background: var(--green-light); }
+.y-icon-expense { background: #F0F0F2; }
+.y-icon-card { background: var(--green-light); }
+.y-body { flex: 1; min-width: 0; }
+.y-amount {
+  display: flex; align-items: baseline; gap: 1px;
+}
+.y-num {
+  font-size: 17px; font-weight: 700;
+  color: var(--text-primary); letter-spacing: -0.3px;
+}
+.y-unit { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.y-label {
+  font-size: 12px; color: var(--text-secondary);
+  letter-spacing: -0.3px; margin-top: 2px;
+}
+.y-badge-peer {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--divider); color: var(--text-primary);
+  font-size: 13px; font-weight: 600;
+  padding: 6px 12px; border-radius: 8px;
+  flex-shrink: 0; letter-spacing: -0.3px;
+}
+/* 불릴까봐 chip */
+.invest-chip {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: var(--divider); color: var(--text-primary);
+  font-size: 13px; font-weight: 600;
+  padding: 6px 12px; border-radius: 8px;
+  flex-shrink: 0; letter-spacing: -0.3px;
+  cursor: pointer; border: none;
+  font-family: inherit; white-space: nowrap;
+}
+/* 혜택 button */
+.benefit-btn {
+  background: var(--divider); border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  padding: 6px 12px; cursor: pointer; font-family: inherit;
+  flex-shrink: 0; letter-spacing: -0.3px;
+}
+/* 살까봐 bar */
+.salk-bar {
+  margin: 0 0 12px;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box,
+              linear-gradient(120deg, #8B5CF6, #60A5FA, #03C75A) border-box;
+  border-radius: 24px; padding: 9px 12px;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: opacity 0.15s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03);
+}
+.salk-bar:active { opacity: 0.7; }
+.salk-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #60A5FA);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 12px; font-weight: 800; color: #fff;
+}
+.salk-placeholder {
+  flex: 1; font-size: 14px; color: var(--text-tertiary);
+  letter-spacing: -0.3px;
+}
+.salk-send {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: #1A1A1A;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+/* Friend Row */
+.f-row {
+  display: flex; align-items: center;
+  padding: 9px 0; gap: 12px;
+  border-bottom: 1px solid var(--divider);
+}
+.f-row:last-child { border-bottom: none; }
+.f-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--border); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; overflow: hidden;
+}
+.f-info { flex: 1; }
+.f-name { font-size: 15px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px; }
+.f-sub { font-size: 12px; letter-spacing: -0.3px; margin-top: 1px; }
+.f-sub-bday { color: var(--green); font-weight: 600; }
+.f-sub-gray { color: var(--text-secondary); }
+.send-btn {
+  background: var(--divider); border: none; border-radius: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-primary);
+  padding: 7px 14px; cursor: pointer; font-family: inherit;
+  flex-shrink: 0; letter-spacing: -0.3px;
+}
+/* Gap */
+.gap8 { height: 8px; }
+.gap20 { height: 20px; }
+/* Bottom Nav */
+.bnb {
+  background: var(--surface);
+  border-top: 1px solid rgba(0,0,0,0.08);
+  border-radius: 16px 16px 0 0;
+  padding: 12px 20px 20px;
+  display: flex; align-items: center;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
+}
+.bnb-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; gap: 3px; cursor: pointer;
+}
+.bnb-icon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+.bnb-label { font-size: 10px; font-weight: 500; color: #767678; letter-spacing: -0.3px; }
+.bnb-item.active .bnb-label { font-weight: 700; color: #000; }
+button { cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="frame">
+
+<!-- Status Bar -->
+<div class="sb">
+  <span class="sb-time">9:41</span>
+  <div class="sb-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+      <rect x="0" y="3" width="3" height="9" rx="1" fill="#1A1A1A"/>
+      <rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1A1A1A"/>
+      <rect x="9" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+      <rect x="13" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+    </svg>
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+      <path d="M8.5 1.5C10.73 1.5 12.73 2.52 14.05 4.12L15.46 2.71C13.78.78 11.29-.25 8.5-.25S3.22.78 1.54 2.71L2.95 4.12C4.27 2.52 6.27 1.5 8.5 1.5Z" fill="#1A1A1A"/>
+      <path d="M8.5 5C9.88 5 11.13 5.56 12.05 6.46L13.46 5.05C12.17 3.78 10.42 3 8.5 3S4.83 3.78 3.54 5.05L4.95 6.46C5.87 5.56 7.12 5 8.5 5Z" fill="#1A1A1A"/>
+      <circle cx="8.5" cy="10" r="1.5" fill="#1A1A1A"/>
+    </svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+      <rect x="0.5" y="1.5" width="21" height="9" rx="1.5" stroke="#1A1A1A" stroke-width="1"/>
+      <rect x="2" y="3" width="17" height="6" rx="0.5" fill="#1A1A1A"/>
+      <path d="M23 4.5V7.5C23.83 7.17 23.83 4.83 23 4.5Z" fill="#1A1A1A"/>
+    </svg>
+  </div>
+</div>
+
+<!-- NPay Header -->
+<div class="npay-header">
+  <svg width="66" height="22" viewBox="0 0 66 22" fill="none">
+    <path d="M22 11C22 13.1756 21.3549 15.3023 20.1462 17.1113C18.9375 18.9202 17.2195 20.3301 15.2095 21.1627C13.1995 21.9952 10.9878 22.2131 8.85401 21.7886C6.72022 21.3642 4.76021 20.3166 3.22183 18.7782C1.68345 17.2398 0.635805 15.2798 0.211368 13.146C-0.213069 11.0122 0.00476301 8.80047 0.837327 6.79048C1.66989 4.78049 3.07979 3.06253 4.88873 1.85383C6.69767 0.645137 8.82441 0 11 0C13.9174 0 16.7153 1.15892 18.7782 3.22183C20.8411 5.28473 22 8.08262 22 11ZM12.8398 5.83V11.3602L8.98976 5.83H5.83V16.1838H9.1575V10.637L13.0075 16.17H16.1783V5.83H12.8398Z" fill="black"/>
+    <path d="M61.4319 5.21944L58.3913 12.1478L54.9518 5.21944H52.3072L57.1783 14.8317L55.1703 19.3358H57.7384L64 5.2331L61.4319 5.21944ZM50.6171 15.9331H48.1037V14.9328C47.1894 15.7342 46.0108 16.1685 44.7953 16.1518C41.7901 16.1518 39.4379 13.692 39.4379 10.5763C39.4379 7.46057 41.7874 5.00079 44.7953 5.00079C46.0104 4.9833 47.189 5.41657 48.1037 6.21701V5.21944H50.6171V15.9331ZM48.3987 10.5899C48.3987 8.57019 46.9891 7.03694 45.1204 7.03694C43.2517 7.03694 41.842 8.57019 41.842 10.5899C41.842 12.6097 43.249 14.1429 45.1204 14.1429C46.9918 14.1429 48.3987 12.596 48.3987 10.5899ZM27.0082 19.3358H29.6309V15.023C30.5282 15.7695 31.6631 16.1699 32.83 16.1518C35.8352 16.1518 38.1901 13.692 38.1901 10.5763C38.1901 7.46057 35.8379 5.00079 32.83 5.00079C31.6117 4.9789 30.429 5.4126 29.5134 6.21701V5.21944H27L27.0082 19.3358ZM32.5186 7.03694C34.3872 7.03694 35.7969 8.57019 35.7969 10.5899C35.7969 12.6097 34.3872 14.1429 32.5186 14.1429C30.6499 14.1429 29.2402 12.6097 29.2402 10.5899C29.2402 8.57019 30.6335 7.03694 32.5186 7.03694Z" fill="black"/>
+  </svg>
+  <div class="npay-header-right">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M12 3C8.69 3 6 5.69 6 9V14L4 16V17H20V16L18 14V9C18 5.69 15.31 3 12 3Z" stroke="#1A1A1A" stroke-width="1.8" fill="none"/>
+      <path d="M10 20H14C14 21.1 13.1 22 12 22C10.9 22 10 21.1 10 20Z" fill="#1A1A1A"/>
+    </svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M3 6H21M3 12H21M3 18H21" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="scroll">
+  <!-- Balance Dark Card -->
+  <div class="balance-card">
+    <div class="balance-top">
+      <div class="balance-nudge">용돈 받을 때야!</div>
+      <div class="balance-title">포인트·머니</div>
+      <span class="balance-link">Npay 가상계좌 만들기</span>
+      <div class="balance-amount">
+        <span class="balance-num">160,000</span>
+        <span class="balance-unit">원</span>
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="margin-left:2px;">
+          <path d="M6 4l6 5-6 5" stroke="rgba(255,255,255,0.5)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <img class="balance-mascot" src="../asset/다람쥐.png" alt="다람쥐">
+    </div>
+    <div class="balance-btns">
+      <button class="balance-btn">충전하기</button>
+      <button class="balance-btn">조르기</button>
+      <button class="balance-btn">더치페이</button>
+    </div>
+  </div>
+
+  <div class="gap8"></div>
+
+  <!-- 용돈기록장 Section (개선) -->
+  <div class="section">
+    <div class="section-title" onclick="location.href='2_calendar.html'">
+      용돈기록장
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M7 5l4 4-4 4" stroke="#929294" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- [A] 살까봐 입력 바 -->
+    <div class="salk-bar" onclick="location.href='A_salkkaboa.html'">
+      <div class="salk-avatar">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+          <path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/>
+          <circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/>
+          <circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/>
+        </svg>
+      </div>
+      <span class="salk-placeholder">에스파 굿즈 살까말까?</span>
+      <div class="salk-send">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M1 11L11 6 1 1v3.5L7.5 6 1 7.5V11Z" fill="white"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Row 1: 이번 달 모은 돈 + [불릴까봐 →] chip -->
+    <div class="y-row">
+      <div class="y-icon y-icon-income">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect width="20" height="20" rx="6" fill="#E8FAF0"/>
+          <path d="M5 13.5L8.5 6.5L10 10L12.5 7.5L15 13.5" stroke="#03C75A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <circle cx="10" cy="10.5" r="1.5" fill="#03C75A"/>
+        </svg>
+      </div>
+      <div class="y-body">
+        <div class="y-amount"><span class="y-num">160,000</span><span class="y-unit">원</span></div>
+        <div class="y-label">이번 달 모은 돈</div>
+      </div>
+      <!-- [C] 불릴까봐 chip: 잔액 48,000 > 30,000 조건 충족 -->
+      <button class="invest-chip" onclick="location.href='C_bulkkaboa.html'">불릴까봐</button>
+    </div>
+
+    <!-- Row 2: 이번 달 쓴 돈 + 또래 비교 badge -->
+    <div class="y-row">
+      <div class="y-icon y-icon-expense">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect width="20" height="20" rx="6" fill="#F0F0F2"/>
+          <path d="M10 5V15M6.5 8.5L10 5L13.5 8.5" stroke="#767676" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="y-body">
+        <div class="y-amount"><span class="y-num">112,000</span><span class="y-unit">원</span></div>
+        <div class="y-label">이번 달 쓴 돈</div>
+      </div>
+      <!-- [B] 또래 비교 badge -->
+      <div class="y-badge-peer" onclick="location.href='B_asset.html'" style="cursor:pointer;">배달 절약왕</div>
+    </div>
+
+    <!-- Row 3: 카드 내역 + 혜택 -->
+    <div class="y-row">
+      <div class="y-icon y-icon-card">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="5" width="16" height="11" rx="2.5" fill="#03C75A"/>
+          <rect x="2" y="8" width="16" height="2.5" fill="rgba(0,0,0,0.2)"/>
+          <rect x="4" y="12" width="4" height="1.5" rx="0.5" fill="rgba(255,255,255,0.7)"/>
+        </svg>
+      </div>
+      <div class="y-body">
+        <div class="y-amount"><span class="y-num" style="font-size:15px;">112,000</span><span class="y-unit" style="font-size:13px;">원</span></div>
+        <div class="y-label">Npay 머니카드 Y 내역</div>
+      </div>
+      <button class="benefit-btn" onclick="location.href='3_card_detail.html'">혜택</button>
+    </div>
+
+  </div>
+
+  <div class="gap20"></div>
+
+  <!-- 즐겨찾는 친구 Section -->
+  <div class="section">
+    <div class="section-title">
+      즐겨찾는 친구
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M7 5l4 4-4 4" stroke="#929294" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="f-row">
+      <div class="f-avatar">👩</div>
+      <div class="f-info">
+        <div class="f-name">박정은</div>
+        <div class="f-sub f-sub-bday">🎂 오늘 생일</div>
+      </div>
+      <button class="send-btn">송금</button>
+    </div>
+    <div class="f-row">
+      <div class="f-avatar">🧑</div>
+      <div class="f-info">
+        <div class="f-name">김민준</div>
+        <div class="f-sub f-sub-gray">어제 더치페이</div>
+      </div>
+      <button class="send-btn">송금</button>
+    </div>
+  </div>
+
+  <div class="gap8"></div>
+</div>
+
+<!-- Bottom Nav: 내지갑, 페이렛, 결제, 송금, 증권 -->
+<nav class="bnb">
+  <!-- 내지갑 (active) -->
+  <div class="bnb-item active">
+    <div class="bnb-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M2 5.5V19.5C2 20.33 2.67 21 3.5 21H20.5C21.33 21 22 20.33 22 19.5V7.86C22 7.03 21.33 6.36 20.5 6.36H12.91L10.6 4.37C10.33 4.13 9.98 4 9.62 4H3.5C2.67 4 2 4.67 2 5.5Z" fill="#1A1A1A"/>
+        <path d="M15.6 10.46a.75.75 0 011.07.17c.22.25.25.59.14.87l-.03.09-2.14 5.55a.75.75 0 01-1.43-.12l-.05-.12-1.5-3.84-1.49 3.84a.75.75 0 01-1.4.07l-.05-.12-2.07-5.55a.75.75 0 011.42-.52l.04.09 1.41 3.78 1.47-3.79a.75.75 0 011.37.04l.05.12 1.5 3.84 1.47-3.78a.75.75 0 01.27-.43z" fill="white"/>
+      </svg>
+    </div>
+    <span class="bnb-label">내지갑</span>
+  </div>
+  <!-- 페이렛 -->
+  <div class="bnb-item">
+    <div class="bnb-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M20 2H4C2.9 2 2 2.9 2 4V16C2 17.1 2.9 18 4 18H8L12 22L16 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="#C8CACC"/>
+        <path d="M8 9H16M8 13H13" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="bnb-label">페이렛</span>
+  </div>
+  <!-- 결제 -->
+  <div class="bnb-item">
+    <div class="bnb-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" fill="#C8CACC"/>
+        <rect x="5" y="5" width="3.5" height="3.5" rx="0.5" fill="white"/>
+        <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" fill="#C8CACC"/>
+        <rect x="15.5" y="5" width="3.5" height="3.5" rx="0.5" fill="white"/>
+        <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" fill="#C8CACC"/>
+        <rect x="5" y="15.5" width="3.5" height="3.5" rx="0.5" fill="white"/>
+        <rect x="13.5" y="13.5" width="3.5" height="3.5" rx="0.5" fill="#C8CACC"/>
+        <rect x="19" y="13.5" width="2" height="2" rx="0.5" fill="#C8CACC"/>
+        <rect x="13.5" y="19" width="2" height="2" rx="0.5" fill="#C8CACC"/>
+        <rect x="17.5" y="17.5" width="4" height="4" rx="0.5" fill="#C8CACC"/>
+      </svg>
+    </div>
+    <span class="bnb-label">결제</span>
+  </div>
+  <!-- 송금 -->
+  <div class="bnb-item">
+    <div class="bnb-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <circle cx="9" cy="8" r="3.5" fill="#C8CACC"/>
+        <path d="M2 19C2 16.24 5.13 14 9 14" stroke="#C8CACC" stroke-width="2" stroke-linecap="round"/>
+        <path d="M15 15l4 4M19 15l-4 4" stroke="#C8CACC" stroke-width="2" stroke-linecap="round"/>
+        <path d="M13 17H22" stroke="#C8CACC" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="bnb-label">송금</span>
+  </div>
+  <!-- 증권 -->
+  <div class="bnb-item">
+    <div class="bnb-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M3 20.5V15.5C3 15.19 3.15 14.89 3.4 14.7L7.55 11.63C8.06 11.25 8.75 11.23 9.28 11.58L12.02 13.42C12.55 13.77 13.24 13.75 13.75 13.37L19.09 9.42C19.88 8.83 21 9.4 21 10.38V20.5C21 21.33 20.33 22 19.5 22H4.5C3.67 22 3 21.33 3 20.5Z" fill="#C8CACC"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M21.6 3.55C21.85 3.89 21.78 4.36 21.45 4.6L13.91 10.18C13.32 10.62 12.51 10.64 11.9 10.23L8.86 8.21C8.6 8.03 8.25 8.04 8 8.23L3.45 11.6C3.11 11.85 2.64 11.78 2.4 11.45C2.15 11.11 2.22 10.64 2.55 10.4L7.11 7.03C7.87 6.46 8.9 6.43 9.69 6.96L12.73 8.99C12.82 9.04 12.93 9.04 13.02 8.98L20.55 3.4C20.89 3.15 21.36 3.22 21.6 3.55Z" fill="#C8CACC"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" d="M16.75 3.5C16.75 3.09 17.09 2.75 17.5 2.75H20.5C21.19 2.75 21.75 3.31 21.75 4V7C21.75 7.41 21.41 7.75 21 7.75C20.59 7.75 20.25 7.41 20.25 7V4.25H17.5C17.09 4.25 16.75 3.91 16.75 3.5Z" fill="#C8CACC"/>
+      </svg>
+    </div>
+    <span class="bnb-label">증권</span>
+  </div>
+</nav>
+
+</div>
+</body>
+</html>
