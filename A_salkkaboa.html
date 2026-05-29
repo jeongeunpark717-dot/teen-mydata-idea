@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>살까봐 — AI 소비 상담</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root {
+  --green: #03C75A; --green-dark: #028A3E; --green-light: #E8FAF0;
+  --purple: #7C3AED; --purple-light: #F3ECFD;
+  --bg: #F3F5F7; --surface: #FFFFFF;
+  --text-primary: #1A1A1A; --text-secondary: #767676; --text-tertiary: #929294;
+  --border: #EDEFF2; --divider: #F3F5F7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #D8D8D8;
+  display: flex; justify-content: center; min-height: 100vh;
+  padding: 24px 0 48px;
+  letter-spacing: -0.3px;
+}
+.frame {
+  width: 375px; background: var(--bg);
+  border-radius: 44px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column; max-height: 812px;
+}
+.sb { height: 44px; background: var(--surface); display: flex; align-items: center; padding: 0 21px; position: relative; flex-shrink: 0; }
+.sb-time { font-size: 15px; font-weight: 600; color: var(--text-primary); position: absolute; left: 21px; top: 50%; transform: translateY(-50%); }
+.sb-icons { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; }
+.header { height: 56px; background: var(--surface); display: flex; align-items: center; padding: 0 20px; position: relative; border-bottom: 1px solid var(--divider); flex-shrink: 0; }
+.header-title { position: absolute; left: 0; right: 0; text-align: center; font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; pointer-events: none; }
+.back-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.g { color: var(--green); }
+
+/* Balance Banner */
+.balance-banner {
+  background: #1E1E23;
+  padding: 14px 20px; display: flex; align-items: center;
+  flex-shrink: 0;
+}
+.bb-left { flex: 1; }
+.bb-label { font-size: 12px; color: rgba(255,255,255,0.75); letter-spacing: -0.3px; margin-bottom: 3px; }
+.bb-amount {
+  font-size: 22px; font-weight: 800; color: white; letter-spacing: -0.5px;
+  display: flex; align-items: baseline; gap: 2px;
+}
+.bb-unit { font-size: 15px; font-weight: 700; }
+.bb-note { font-size: 12px; color: rgba(255,255,255,0.65); margin-left: auto; letter-spacing: -0.3px; }
+
+/* Chat Area */
+.chat { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* Bubbles */
+.msg { display: flex; gap: 8px; align-items: flex-end; }
+.msg.user { justify-content: flex-end; }
+.ai-face {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #60A5FA);
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.bubble {
+  max-width: 76%; padding: 10px 14px;
+  font-size: 15px; font-weight: 400; line-height: 1.5; letter-spacing: -0.3px;
+}
+.bubble.ai {
+  background: var(--surface); color: var(--text-primary);
+  border-radius: 18px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.bubble.user {
+  background: var(--green); color: white;
+  border-radius: 18px;
+}
+.msg-meta { font-size: 11px; color: var(--text-tertiary); align-self: flex-end; flex-shrink: 0; }
+
+/* Action Cards */
+.action-card {
+  margin-left: 38px;
+  background: var(--surface); border-radius: 14px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  max-width: calc(76% + 38px);
+}
+.action-card.p { border-color: rgba(124,58,237,0.2); }
+.ac-title { font-size: 14px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.3px; margin-bottom: 3px; }
+.ac-desc { font-size: 13px; color: var(--text-secondary); letter-spacing: -0.3px; line-height: 1.4; margin-bottom: 12px; }
+/* defign box-s 버튼 */
+.ac-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 36px; padding: 0 16px;
+  background: var(--text-primary); color: #fff;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.3px;
+  border: none; border-radius: 8px;
+  cursor: pointer; font-family: inherit;
+}
+.ac-btn:active { opacity: 0.85; }
+.ac-btn.green { background: var(--green); }
+.ac-btn.purple { background: var(--purple); }
+
+/* Typing */
+.typing { display: flex; align-items: center; gap: 4px; padding: 10px 14px; }
+.t-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); animation: td 1.2s infinite ease-in-out; }
+.t-dot:nth-child(2) { animation-delay: .2s; }
+.t-dot:nth-child(3) { animation-delay: .4s; }
+@keyframes td { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+/* Quick Chips — defign btn_chips_34 */
+.quick { display: flex; gap: 6px; overflow-x: auto; padding: 8px 16px; flex-shrink: 0; }
+.quick::-webkit-scrollbar { display: none; }
+.q-chip {
+  flex-shrink: 0;
+  height: 34px; padding: 7px 14px 6px;
+  font-size: 15px; font-weight: 500;
+  line-height: 21px; letter-spacing: -0.5px;
+  color: #767678;
+  background: #F3F5F7;
+  border: 1px solid #DCDEE0; border-radius: 18px;
+  cursor: pointer; font-family: inherit;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.q-chip:active { background: var(--green-light); border-color: var(--green); color: var(--green-dark); }
+
+/* Input Area */
+.input-wrap {
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 10px 16px 20px; display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.chat-input {
+  flex: 1; background: var(--bg); border: none; border-radius: 20px;
+  padding: 10px 14px; font-size: 15px; color: var(--text-primary);
+  font-family: inherit; letter-spacing: -0.3px; outline: none;
+  resize: none; min-height: 40px; max-height: 80px; line-height: 1.4;
+}
+.chat-input::placeholder { color: var(--text-tertiary); }
+/* defign box-s send 버튼 */
+.send-btn {
+  height: 36px; padding: 0 14px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 8px;
+  cursor: pointer; font-family: inherit;
+  font-size: 13px; font-weight: 700; letter-spacing: -0.3px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; gap: 4px;
+}
+.send-btn:active { background: var(--green-dark); }
+</style>
+</head>
+<body>
+<div class="frame">
+
+<div class="sb">
+  <span class="sb-time">9:41</span>
+  <div class="sb-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+      <rect x="0" y="3" width="3" height="9" rx="1" fill="#1A1A1A"/>
+      <rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1A1A1A"/>
+      <rect x="9" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+      <rect x="13" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/>
+    </svg>
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+      <path d="M8.5 1.5C10.73 1.5 12.73 2.52 14.05 4.12L15.46 2.71C13.78.78 11.29-.25 8.5-.25S3.22.78 1.54 2.71L2.95 4.12C4.27 2.52 6.27 1.5 8.5 1.5Z" fill="#1A1A1A"/>
+      <path d="M8.5 5C9.88 5 11.13 5.56 12.05 6.46L13.46 5.05C12.17 3.78 10.42 3 8.5 3S4.83 3.78 3.54 5.05L4.95 6.46C5.87 5.56 7.12 5 8.5 5Z" fill="#1A1A1A"/>
+      <circle cx="8.5" cy="10" r="1.5" fill="#1A1A1A"/>
+    </svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+      <rect x="0.5" y="1.5" width="21" height="9" rx="1.5" stroke="#1A1A1A" stroke-width="1"/>
+      <rect x="2" y="3" width="17" height="6" rx="0.5" fill="#1A1A1A"/>
+      <path d="M23 4.5V7.5C23.83 7.17 23.83 4.83 23 4.5Z" fill="#1A1A1A"/>
+    </svg>
+  </div>
+</div>
+
+<div class="header">
+  <div class="back-btn" onclick="location.href='1_home.html'">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M15 19l-7-7 7-7" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+  <div class="header-title">살까봐</div>
+</div>
+
+<!-- Balance Banner -->
+<div class="balance-banner">
+  <div class="bb-left" onclick="location.href='2_calendar.html'" style="cursor:pointer;">
+    <div class="bb-label">지민 씨 현재 잔액</div>
+    <div class="bb-amount">
+      <span>48,000</span><span class="bb-unit">원</span>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-left:2px;opacity:0.6;">
+        <path d="M6 4l4 4-4 4" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+  <div class="bb-note">고1 · 이번 달 지출 112,000원</div>
+</div>
+
+<!-- Chat -->
+<div class="chat" id="chatArea">
+
+  <div class="msg">
+    <div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div>
+    <div class="bubble ai">안녕 지민! 👋 뭐 살까봐 고민돼? 잔액이랑 이번 달 소비 같이 보면서 얘기해줄게 😊</div>
+  </div>
+
+  <div class="msg user">
+    <div class="msg-meta">오전 9:38</div>
+    <div class="bubble user">지금 에어팟 프로 반값인데 사도 돼?</div>
+  </div>
+
+  <div class="msg">
+    <div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div>
+    <div class="bubble ai">지금 잔액 <strong>48,000원</strong>인데 에어팟 프로가 139,000원이잖아. 91,000원 부족해 😅<br><br>근데 이번 달 배달을 또래보다 줄인 건 진짜 잘했어 👍</div>
+  </div>
+
+  <div class="action-card">
+    <div class="ac-title">💬 용돈 졸라볼까?</div>
+    <div class="ac-desc">배달 30% 줄인 이력으로 부모님 협상 카드 만들어줄게</div>
+    <button class="ac-btn green" onclick="location.href='1_home.html'">부모님 협상 카드 받기</button>
+  </div>
+
+  <div class="msg user">
+    <div class="msg-meta">오전 9:39</div>
+    <div class="bubble user">그냥 못 사는 거야?</div>
+  </div>
+
+  <div class="msg">
+    <div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div>
+    <div class="bubble ai">지금 당장은 무리야. 근데 이 48,000원 매달 조금씩 불려보면 어떨까? 1년 뒤 꽤 달라져 📈</div>
+  </div>
+
+  <div class="action-card p">
+    <div class="ac-title">📈 불릴까봐 — 시뮬레이션 해볼까?</div>
+    <div class="ac-desc">48,000원 매달 넣으면 1년 뒤 얼마? 직접 눌러봐</div>
+    <button class="ac-btn purple" onclick="location.href='C_bulkkaboa.html'">저축 시뮬레이션 보기</button>
+  </div>
+
+  <div class="msg user">
+    <div class="msg-meta">오전 9:40</div>
+    <div class="bubble user">그럼 내가 줄일 수 있는 데가 있어?</div>
+  </div>
+
+  <div class="msg">
+    <div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div>
+    <div class="bubble ai">아참 — 이번 달 편의점 좀 많이 갔어. 여기 조금 줄이면 생각보다 빨리 에어팟 모을 수 있어 🧃</div>
+  </div>
+
+  <div class="action-card">
+    <div class="ac-title">📊 내 소비 분석</div>
+    <div class="ac-desc">편의점 지출 또래 상위 28% — 어디서 새는지 같이 보자</div>
+    <button class="ac-btn" onclick="location.href='B_asset.html'">소비 분석 전체 보기</button>
+  </div>
+
+</div>
+
+<!-- Quick Chips -->
+<div class="quick">
+  <button class="q-chip" onclick="askAI('잔액이 얼마야?')">💰 잔액 얼마야?</button>
+  <button class="q-chip" onclick="askAI('이번 달 어때?')">📊 이번 달 어때?</button>
+  <button class="q-chip" onclick="askAI('편의점 줄이려면 어떻게 해?')">🧃 편의점 줄이기</button>
+  <button class="q-chip" onclick="askAI('에스파 굿즈 살 수 있어?')">🎤 에스파 굿즈 살까?</button>
+  <button class="q-chip" onclick="askAI('친구 생일 선물 살 수 있어?')">🎁 친구 선물 살까?</button>
+  <button class="q-chip" onclick="askAI('올리브영 가도 돼?')">💄 올리브영 가도 돼?</button>
+  <button class="q-chip" onclick="askAI('카페 너무 많이 가?')">☕ 카페 너무 많이 가?</button>
+  <button class="q-chip" onclick="askAI('이번 달 저축 어때?')">🐿️ 저축 상태 어때?</button>
+</div>
+
+<!-- Input -->
+<div class="input-wrap">
+  <textarea class="chat-input" id="chatInput" placeholder="살까봐에게 물어봐..."
+    rows="1" oninput="autoResize(this)"
+    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
+  <button class="send-btn" onclick="sendMsg()">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+      <path d="M1.5 14.5L14.5 8 1.5 1.5V6L10.5 8 1.5 10V14.5Z" fill="white"/>
+    </svg>
+    전송
+  </button>
+</div>
+
+</div>
+<script>
+/* ── 클릭 시 말풍선 하나씩 표시 ── */
+const chatArea = document.getElementById('chatArea');
+const allMsgs = Array.from(chatArea.children);
+let revealIdx = 1;
+
+// 첫 번째 메시지만 남기고 나머지 숨김
+allMsgs.slice(1).forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(10px)';
+  el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  el.dataset.hidden = 'true';
+});
+
+chatArea.addEventListener('click', (e) => {
+  // 인터랙션 버튼 클릭은 무시
+  if (e.target.closest('button, .action-card, a, textarea')) return;
+  if (revealIdx >= allMsgs.length) return;
+  const el = allMsgs[revealIdx];
+  el.dataset.hidden = 'false';
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0)';
+  });
+  revealIdx++;
+});
+
+const replies = {
+  '잔액': '지금 잔액은 <strong>48,000원</strong>이야! 이번 달 용돈 160,000원 받았고 112,000원 썼어 🧮',
+  '이번 달': '이번 달 <strong>112,000원</strong> 썼어. 배달은 또래보다 절약 중인데 편의점이 좀 많아 🧃',
+  '편의점': '편의점을 하루 1번씩 가면 한 달에 보통 30k 넘어. 격일로 줄이면 15k 절약 가능해! 작은 것부터 바꿔봐 💪',
+  '살 수': '뭐 사려고? 이름이랑 금액 알려줘! 지금 잔액이랑 비교해서 바로 알려줄게 😊',
+};
+const fallback = '조금 더 구체적으로 말해줘! "OO 살 수 있어?" 이런 식으로 물어봐 😊';
+
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 80) + 'px'; }
+function askAI(t) { document.getElementById('chatInput').value = t; sendMsg(); }
+function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function sendMsg() {
+  const inp = document.getElementById('chatInput');
+  const txt = inp.value.trim(); if (!txt) return;
+  const ca = document.getElementById('chatArea');
+
+  const uRow = document.createElement('div');
+  uRow.className = 'msg user';
+  uRow.innerHTML = `<div class="msg-meta">방금</div><div class="bubble user">${esc(txt)}</div>`;
+  ca.appendChild(uRow);
+  inp.value = ''; inp.style.height = 'auto';
+  ca.scrollTop = ca.scrollHeight;
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'msg'; typing.id = 'typing';
+  typing.innerHTML = `<div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div><div class="bubble ai"><div class="typing"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div></div>`;
+  ca.appendChild(typing);
+  ca.scrollTop = ca.scrollHeight;
+
+  setTimeout(() => {
+    document.getElementById('typing')?.remove();
+    let rep = fallback;
+    for (const [k, v] of Object.entries(replies)) { if (txt.includes(k)) { rep = v; break; } }
+    const aRow = document.createElement('div');
+    aRow.className = 'msg';
+    aRow.innerHTML = `<div class="ai-face"><svg width="14" height="14" viewBox="0 0 15 15" fill="none"><path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/><circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/><circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/></svg></div><div class="bubble ai">${rep}</div>`;
+    ca.appendChild(aRow);
+    ca.scrollTop = ca.scrollHeight;
+  }, 1100);
+}
+</script>
+</body>
+</html>

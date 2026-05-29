@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>불릴까봐 — 투자 입문 코치</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<style>
+:root {
+  --green: #03C75A; --green-dark: #028A3E; --green-light: #E8FAF0;
+  --bg: #F3F5F7; --surface: #FFFFFF;
+  --text-primary: #1A1A1A; --text-secondary: #767676; --text-tertiary: #929294;
+  --border: #EDEFF2; --divider: #F3F5F7;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  font-family: 'Pretendard', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #D8D8D8;
+  display: flex; justify-content: center; min-height: 100vh;
+  padding: 24px 0 48px;
+  letter-spacing: -0.3px;
+}
+.frame {
+  width: 375px; background: var(--bg);
+  border-radius: 44px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+  display: flex; flex-direction: column; max-height: 812px;
+}
+.sb { height: 44px; background: var(--surface); display: flex; align-items: center; padding: 0 21px; position: relative; flex-shrink: 0; }
+.sb-time { font-size: 15px; font-weight: 600; color: var(--text-primary); position: absolute; left: 21px; top: 50%; transform: translateY(-50%); }
+.sb-icons { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 5px; }
+.header { height: 56px; background: var(--surface); display: flex; align-items: center; padding: 0 20px; position: relative; border-bottom: 1px solid var(--divider); flex-shrink: 0; }
+.header-title { position: absolute; left: 0; right: 0; text-align: center; font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; pointer-events: none; }
+.back-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Balance Banner */
+.banner {
+  background: #1E1E23;
+  padding: 16px 20px; display: flex; align-items: center;
+  position: relative; overflow: hidden; flex-shrink: 0;
+}
+.b-left { flex: 1; }
+.b-label { font-size: 12px; color: rgba(255,255,255,0.75); letter-spacing: -0.3px; margin-bottom: 4px; }
+.b-amount { font-size: 26px; font-weight: 800; color: white; letter-spacing: -0.8px; display: flex; align-items: baseline; gap: 2px; }
+.b-unit { font-size: 17px; font-weight: 700; }
+.b-note { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+.b-emoji { font-size: 52px; flex-shrink: 0; opacity: 0.9; }
+
+/* Content */
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 12px 16px 20px; }
+.card { background: var(--surface); border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 4px; }
+.card-subtitle { font-size: 13px; color: var(--text-secondary); letter-spacing: -0.3px; margin-bottom: 16px; }
+
+/* Goal chips */
+.goal-scroll { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+.goal-scroll::-webkit-scrollbar { display: none; }
+.goal-chip {
+  flex-shrink: 0; min-width: 76px;
+  background: #F3F5F7; border: none; border-radius: 12px;
+  padding: 8px 12px; text-align: center;
+  font-family: inherit; cursor: pointer; transition: all .15s;
+  font-size: 13px; font-weight: 600; color: var(--text-secondary); line-height: 1.4;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.goal-chip .g-price { font-size: 11px; font-weight: 500; color: var(--text-tertiary); display: block; margin-top: 2px; }
+.goal-chip.on { background: var(--green-light); color: var(--green-dark); }
+.goal-chip.on .g-price { color: var(--green-dark); opacity: 0.75; }
+/* 직접 추가 칩 */
+.add-chip { background: var(--surface); color: var(--text-primary); font-weight: 700; min-width: 72px; }
+/* 직접 추가 폼 */
+.custom-goal-form {
+  background: var(--bg); border-radius: 12px; padding: 12px;
+  margin-bottom: 12px; display: none; flex-direction: column; gap: 8px;
+}
+.cg-row { display: flex; gap: 6px; }
+.cg-input {
+  flex: 1; height: 36px; border-radius: 8px; border: none;
+  background: var(--surface); padding: 0 12px;
+  font-size: 13px; font-family: inherit; color: var(--text-primary);
+  outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.cg-btn {
+  height: 36px; padding: 0 14px; border-radius: 8px; border: none;
+  background: var(--green); color: #fff;
+  font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Result display */
+.result-box {
+  background: var(--green-light); border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.result-goal-msg { font-size: 13px; font-weight: 600; color: var(--green-dark); letter-spacing: -0.3px; margin-bottom: 9px; }
+.result-remain { font-size: 34px; font-weight: 800; color: var(--green-dark); letter-spacing: -1px; line-height: 1.1; margin-bottom: 15px; }
+/* 이중 프로그레스 바 — 현재잔액(진한) + 적립예상(연한) */
+.result-bar-wrap { height: 8px; background: rgba(3,199,90,0.15); border-radius: 4px; overflow: hidden; margin-bottom: 13px; display: flex; }
+.result-bar-current { height: 100%; background: var(--green); transition: width 0.5s ease; }
+.result-bar-project { height: 100%; background: rgba(3,199,90,0.4); transition: width 0.5s ease; }
+.result-sub { font-size: 12px; color: var(--green-dark); opacity: 0.7; letter-spacing: -0.2px; margin-bottom: 5px; }
+
+/* Slider */
+.slider-group { margin-bottom: 14px; }
+.slider-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+.slider-lbl { font-size: 13px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px; }
+.slider-val { font-size: 14px; font-weight: 700; color: var(--green-dark); letter-spacing: -0.3px; }
+input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; border-radius: 2px; outline: none;
+  background: linear-gradient(to right, var(--green) 0%, var(--green) var(--p, 38%), var(--border) var(--p, 38%));
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 2px 6px rgba(3,199,90,0.38); cursor: pointer;
+}
+
+/* 기간·수익률 칩 — box-s, 외곽 라인 없음, 선택 시 green full fill */
+.period-chips { display: flex; gap: 6px; margin-bottom: 10px; }
+.p-chip {
+  flex: 1; height: 36px;
+  border-radius: 8px;
+  background: #F3F5F7; color: #767678;
+  border: none;
+  font-size: 14px; font-weight: 600; letter-spacing: -0.3px;
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.p-chip.on { background: var(--green); color: #fff; }
+
+.rate-chips { display: flex; gap: 6px; margin-bottom: 8px; }
+.r-chip {
+  flex: 1; height: 36px; border-radius: 8px;
+  background: #F3F5F7; color: #767678;
+  border: none;
+  font-size: 13px; font-weight: 600; letter-spacing: -0.3px;
+  cursor: pointer; font-family: inherit; transition: all .15s;
+}
+.r-chip.on { background: var(--green); color: #fff; }
+
+.disclaimer { font-size: 10px; color: var(--text-tertiary); letter-spacing: -0.2px; line-height: 1.5; text-align: center; padding-top: 8px; }
+
+/* Concept cards */
+.concept-row { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+.concept-row::-webkit-scrollbar { display: none; }
+.c-card { width: 152px; flex-shrink: 0; border-radius: 14px; padding: 14px 14px; cursor: pointer; }
+.c-emoji { font-size: 24px; margin-bottom: 8px; display: block; line-height: 1; }
+.c-title { font-size: 14px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 4px; }
+.c-desc { font-size: 12px; letter-spacing: -0.3px; line-height: 1.4; }
+.c-time { font-size: 10px; font-weight: 600; margin-top: 8px; letter-spacing: -0.2px; }
+.c1 { background: #F0F0F2; }
+.c1 .c-title { color: var(--text-primary); }
+.c1 .c-desc, .c1 .c-time { color: var(--text-secondary); }
+.c2 { background: var(--green-light); }
+.c2 .c-title { color: var(--green-dark); }
+.c2 .c-desc, .c2 .c-time { color: #3A7A5A; }
+.c3 { background: #FEF3C7; }
+.c3 .c-title { color: #92400E; }
+.c3 .c-desc, .c3 .c-time { color: #A16207; }
+
+/* Chat input area — 살까봐 스타일 */
+.chat-area { background: var(--surface); border-radius: 16px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 8px; }
+/* AI 입력바 (살까봐 salk-bar 동일) */
+.ai-input-bar {
+  background: linear-gradient(var(--bg), var(--bg)) padding-box,
+              linear-gradient(120deg, #8B5CF6, #60A5FA, #03C75A) border-box;
+  border: 1.5px solid transparent;
+  border-radius: 24px; padding: 9px 12px;
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.03);
+  transition: opacity 0.15s;
+}
+.ai-input-bar:active { opacity: 0.7; }
+.ai-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #60A5FA);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ai-placeholder { flex: 1; font-size: 14px; color: var(--text-tertiary); letter-spacing: -0.3px; }
+/* 아이콘 전송 버튼 */
+.ai-send {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--text-primary); color: #fff;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ai-send:active { opacity: 0.85; }
+</style>
+</head>
+<body>
+<div class="frame">
+
+<div class="sb">
+  <span class="sb-time">9:41</span>
+  <div class="sb-icons">
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><rect x="0" y="3" width="3" height="9" rx="1" fill="#1A1A1A"/><rect x="4.5" y="2" width="3" height="10" rx="1" fill="#1A1A1A"/><rect x="9" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/><rect x="13" y="0" width="3" height="12" rx="1" fill="#1A1A1A"/></svg>
+    <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 1.5C10.73 1.5 12.73 2.52 14.05 4.12L15.46 2.71C13.78.78 11.29-.25 8.5-.25S3.22.78 1.54 2.71L2.95 4.12C4.27 2.52 6.27 1.5 8.5 1.5Z" fill="#1A1A1A"/><path d="M8.5 5C9.88 5 11.13 5.56 12.05 6.46L13.46 5.05C12.17 3.78 10.42 3 8.5 3S4.83 3.78 3.54 5.05L4.95 6.46C5.87 5.56 7.12 5 8.5 5Z" fill="#1A1A1A"/><circle cx="8.5" cy="10" r="1.5" fill="#1A1A1A"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="1.5" width="21" height="9" rx="1.5" stroke="#1A1A1A" stroke-width="1"/><rect x="2" y="3" width="17" height="6" rx="0.5" fill="#1A1A1A"/><path d="M23 4.5V7.5C23.83 7.17 23.83 4.83 23 4.5Z" fill="#1A1A1A"/></svg>
+  </div>
+</div>
+<div class="header">
+  <div class="back-btn" onclick="location.href='A_salkkaboa.html'">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M15 19l-7-7 7-7" stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+  <div class="header-title">불릴까봐</div>
+</div>
+
+<!-- Banner -->
+<div class="banner">
+  <div class="b-left">
+    <div class="b-label">지금 이 돈, 불려볼 수 있어</div>
+    <div class="b-amount"><span>48,000</span><span class="b-unit">원</span></div>
+    <div class="b-note">지민 씨 현재 잔액 기준</div>
+  </div>
+  <div class="b-emoji">📈</div>
+</div>
+
+<div class="content">
+
+  <!-- Simulator -->
+  <div class="card">
+    <div class="card-title">🎯 뭐 사고 싶어?</div>
+    <div class="card-subtitle">목표 고르면 몇 달 만에 살 수 있는지 바로 알려줄게!</div>
+
+    <!-- 목표 고르기 -->
+    <div class="goal-scroll" id="goalScroll">
+      <button class="goal-chip on" id="g139" onclick="setGoal(139000,'🎧 에어팟 프로',this)">🎧 에어팟<span class="g-price">139,000원</span></button>
+      <button class="goal-chip" id="g80" onclick="setGoal(80000,'👟 운동화',this)">👟 운동화<span class="g-price">80,000원</span></button>
+      <button class="goal-chip" id="g50" onclick="setGoal(50000,'🎮 게임 머니',this)">🎮 게임<span class="g-price">50,000원</span></button>
+      <button class="goal-chip" id="g200" onclick="setGoal(200000,'💄 올리브영',this)">💄 올리브영<span class="g-price">200,000원</span></button>
+      <button class="goal-chip" id="g1300" onclick="setGoal(1300000,'📱 아이폰',this)">📱 아이폰<span class="g-price">130만원</span></button>
+      <button class="goal-chip add-chip" onclick="toggleCustomGoal()">+ 직접 추가</button>
+    </div>
+    <!-- 직접 추가 폼 -->
+    <div class="custom-goal-form" id="customGoalForm">
+      <div class="cg-row">
+        <input class="cg-input" id="cgName" placeholder="목표 이름 (예: 나이키 신발)">
+        <input class="cg-input" id="cgPrice" type="number" placeholder="금액" style="max-width:110px;">
+      </div>
+      <div class="cg-row">
+        <button class="cg-btn" onclick="addCustomGoal()">추가하기</button>
+        <button class="cg-btn" onclick="toggleCustomGoal()" style="background:var(--bg);color:var(--text-secondary);">취소</button>
+      </div>
+    </div>
+
+    <!-- Result -->
+    <div class="result-box">
+      <div class="result-goal-msg" id="resGoalMsg">🎧 에어팟 프로까지</div>
+      <div class="result-remain" id="resRemain">91,000원 남았어!</div>
+      <div class="result-bar-wrap">
+        <div class="result-bar-current" id="resBarCurrent"></div>
+        <div class="result-bar-project" id="resBarProject"></div>
+      </div>
+      <div class="result-sub" id="resSub">1년 뒤 576,000원 모임 (이자 +14,400원)</div>
+    </div>
+
+    <!-- 월 적립액 슬라이더 -->
+    <div class="slider-group">
+      <div class="slider-label-row">
+        <span class="slider-lbl">매달 얼마씩 모을래?</span>
+        <span class="slider-val" id="mLabel">48,000원</span>
+      </div>
+      <input type="range" id="mSlider" min="10000" max="100000" step="5000" value="48000" oninput="calc()" style="--p:38%">
+    </div>
+
+    <!-- 기간 (라벨 없음) -->
+    <div class="period-chips">
+      <button class="p-chip" id="p6" onclick="setPeriod(6)">6개월</button>
+      <button class="p-chip on" id="p12" onclick="setPeriod(12)">1년</button>
+      <button class="p-chip" id="p36" onclick="setPeriod(36)">3년</button>
+    </div>
+
+    <!-- 수익률 (라벨 없음) -->
+    <div class="rate-chips">
+      <button class="r-chip" id="r3" onclick="setRate(3)">예금 3%</button>
+      <button class="r-chip on" id="r5" onclick="setRate(5)">펀드 5%</button>
+      <button class="r-chip" id="r7" onclick="setRate(7)">ETF 7%</button>
+    </div>
+
+    <div class="disclaimer">⚠️ 예시 수익률 · 원금 보장 아님 · 투자 권유 아님</div>
+  </div>
+
+  <!-- Concept Cards -->
+  <div class="card" style="padding-left:16px;padding-right:0;padding-bottom:16px;">
+    <div class="card-title" style="padding-right:20px;margin-bottom:12px;">💡 30초 개념 카드</div>
+    <div class="concept-row">
+      <div class="c-card c1">
+        <span class="c-emoji">📦</span>
+        <div class="c-title">ETF가 뭐야?</div>
+        <div class="c-desc">여러 주식을 한 바구니에 넣어 한 번에 사는 것. 분산투자!　</div>
+        <div class="c-time">⏱ 30초</div>
+      </div>
+      <div class="c-card c2">
+        <span class="c-emoji">🌱</span>
+        <div class="c-title">복리의 마법</div>
+        <div class="c-desc">이자에 이자가 붙는 것. 일찍 시작할수록 차이가 훨씬 커져!</div>
+        <div class="c-time">⏱ 30초</div>
+      </div>
+      <div class="c-card c3">
+        <span class="c-emoji">🏦</span>
+        <div class="c-title">적금 vs 예금</div>
+        <div class="c-desc">적금은 매달 넣기, 예금은 한 번에 맡기기. 용돈엔 적금이 딱!</div>
+        <div class="c-time">⏱ 30초</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat — 살까봐 스타일 -->
+  <div class="chat-area">
+    <div class="card-title" style="margin-bottom:12px;">불릴까봐에게 투자 질문해봐</div>
+    <div class="ai-input-bar" onclick="location.href='A_salkkaboa.html'">
+      <div class="ai-avatar">
+        <svg width="14" height="14" viewBox="0 0 15 15" fill="none">
+          <path d="M7.5 0.5L8.9 6.1L14.5 7.5L8.9 8.9L7.5 14.5L6.1 8.9L0.5 7.5L6.1 6.1L7.5 0.5Z" fill="white"/>
+          <circle cx="13" cy="2" r="1" fill="white" opacity="0.55"/>
+          <circle cx="2.5" cy="12.5" r="0.7" fill="white" opacity="0.4"/>
+        </svg>
+      </div>
+      <span class="ai-placeholder">ETF? 적금? 뭐든 물어봐</span>
+      <button class="ai-send" onclick="location.href='A_salkkaboa.html'">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M1 11L11 6 1 1v3.5L7.5 6 1 7.5V11Z" fill="white"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</div>
+</div>
+<script>
+let period = 12, rate = 5, goalAmt = 139000, goalName = '🎧 에어팟 프로';
+const CURRENT_BALANCE = 48000;
+
+function calc() {
+  const s = document.getElementById('mSlider');
+  const m = parseInt(s.value);
+  const sliderPct = Math.round((m - 10000) / 90000 * 100);
+  s.style.setProperty('--p', sliderPct + '%');
+  document.getElementById('mLabel').textContent = m.toLocaleString('ko-KR') + '원';
+
+  const r = rate / 100 / 12;
+  let total = r === 0 ? m * period : m * ((Math.pow(1 + r, period) - 1) / r) * (1 + r);
+  const interest = Math.round(total - m * period);
+  total = Math.round(total);
+
+  // 남은 금액 표시
+  const remaining = Math.max(0, goalAmt - total);
+  document.getElementById('resGoalMsg').textContent = goalName + '까지';
+  document.getElementById('resRemain').textContent =
+    remaining === 0 ? '목표 달성! 🎉' : remaining.toLocaleString('ko-KR') + '원 남았어!';
+
+  // 이중 프로그레스 바: 현재 잔액(진한) + 추가 적립(연한)
+  const currentPct = Math.min(100, Math.round(CURRENT_BALANCE / goalAmt * 100));
+  const totalPct   = Math.min(100, Math.round(total / goalAmt * 100));
+  const projectPct = Math.max(0, Math.min(100 - currentPct, totalPct - currentPct));
+  document.getElementById('resBarCurrent').style.width = currentPct + '%';
+  document.getElementById('resBarProject').style.width = projectPct + '%';
+
+  document.getElementById('resSub').textContent =
+    period + '개월 뒤 ' + total.toLocaleString('ko-KR') + '원 모임 (이자 +' + interest.toLocaleString('ko-KR') + '원)';
+}
+
+function setGoal(amt, name, el) {
+  goalAmt = amt; goalName = name;
+  document.querySelectorAll('.goal-chip:not(.add-chip)').forEach(e => e.classList.remove('on'));
+  el.classList.add('on');
+  calc();
+}
+
+function toggleCustomGoal() {
+  const f = document.getElementById('customGoalForm');
+  f.style.display = f.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function addCustomGoal() {
+  const name  = document.getElementById('cgName').value.trim();
+  const price = parseInt(document.getElementById('cgPrice').value);
+  if (!name || !price || price <= 0) { alert('이름과 금액을 입력해줘!'); return; }
+
+  const btn = document.createElement('button');
+  btn.className = 'goal-chip';
+  btn.innerHTML = name + '<span class="g-price">' + price.toLocaleString('ko-KR') + '원</span>';
+  btn.onclick = function() { setGoal(price, name, this); };
+
+  const scroll = document.getElementById('goalScroll');
+  scroll.insertBefore(btn, scroll.lastElementChild); // + 직접추가 버튼 앞에 삽입
+  setGoal(price, name, btn);
+  toggleCustomGoal();
+  document.getElementById('cgName').value = '';
+  document.getElementById('cgPrice').value = '';
+}
+
+function setPeriod(p) {
+  period = p;
+  document.querySelectorAll('.p-chip').forEach(e => e.classList.remove('on'));
+  document.getElementById('p' + p).classList.add('on');
+  calc();
+}
+
+function setRate(r) {
+  rate = r;
+  document.querySelectorAll('.r-chip').forEach(e => e.classList.remove('on'));
+  document.getElementById('r' + r).classList.add('on');
+  calc();
+}
+
+calc();
+</script>
+</body>
+</html>
